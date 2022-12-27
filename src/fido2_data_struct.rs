@@ -10,7 +10,7 @@ use crate::{
 pub(crate) struct FIDO2PacketCommandPingRequest<'a> {
     pub data: &'a [u8],
 }
-impl FIDO2PacketCommandPingRequest<'_> {
+impl<'a> FIDO2PacketCommandPingRequest<'a> {
     pub fn unpack(packet: &[u8]) -> Result<FIDO2PacketCommandPingRequest, FIDO2InternalError> {
         Ok(FIDO2PacketCommandPingRequest { data: packet })
     }
@@ -19,12 +19,12 @@ impl FIDO2PacketCommandPingRequest<'_> {
 pub(crate) struct FIDO2PacketCommandPingResponse<'a> {
     pub data: &'a [u8],
 }
-impl FIDO2PacketCommandPingResponse<'_> {
+impl<'a> FIDO2PacketCommandPingResponse<'a> {
     pub fn new(data: &[u8]) -> FIDO2PacketCommandPingResponse {
         FIDO2PacketCommandPingResponse { data }
     }
-    pub fn pack(self) -> [u8; FIDO2_MAX_DATA_LENGTH] {
-        self.data.try_into().unwrap()
+    pub fn pack(self) -> &'a [u8] {
+        self.data
     }
 }
 // Init
