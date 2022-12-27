@@ -1,0 +1,35 @@
+[package]
+name = "unsafe-key"
+version = "1.0.0"
+edition = "2021"
+
+[profile.release]
+# optimize for size ('z' would optimize even more)
+opt-level = 3
+# link with link time optimization (lto).
+lto = true
+# enable debugging in release mode.
+debug = false
+
+[dependencies]
+# Gives us access to the STM32F1 registers
+stm32f1xx-hal = { version = "*", features = ["stm32f103", "rt", "medium"] }
+# provides startup code for the ARM CPU
+cortex-m-rt = { version = "*", features = ["device"] }
+# provides access to low level ARM CPU registers (used for delay)
+cortex-m = "*"
+# provies a panic-handler (halting cpu)
+# (required when not using stdlib)
+panic-halt = "*"
+micromath = "*"
+ssd1306 = "*"
+embedded-hal = "*"
+embedded-graphics = "*"
+nb = "*"
+fugit = "*"
+usb-device = "*"
+usbd-hid = "*"
+build-time = "*"
+byteorder = { version = "*", default-features = false }
+num_enum = { version = "*", default-features = false }
+panic-reset = "*"

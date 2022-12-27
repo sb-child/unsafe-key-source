@@ -1,0 +1,24 @@
+#[build]
+# Instruction set of Cortex-M3 (used in BluePill)
+#target = "thumbv7m-none-eabi"
+
+#rustflags = [
+#  # use the Tlink.x scrip from the cortex-m-rt crate
+#  "-C", "link-arg=-memory.x",
+#]
+
+
+
+[target.thumbv7m-none-eabi]
+# rustflags = ["-C", "link-arg=memory.x"]
+rustflags = [
+  # use the Tlink.x scrip from the cortex-m-rt crate
+  "-C", "link-arg=-Tlink.x",
+]
+
+[build]
+target = "thumbv7m-none-eabi"
+#rustflags = [
+#  # use the Tlink.x scrip from the cortex-m-rt crate
+#  "-C", "link-arg=-Tmemory.x",
+#]

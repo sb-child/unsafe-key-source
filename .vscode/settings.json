@@ -1,0 +1,10 @@
+{
+    "rust-analyzer.cargo.target": "thumbv7m-none-eabi",
+    "rust-analyzer.checkOnSave.allTargets": false,
+    "rust-analyzer.checkOnSave.extraArgs": [
+        "--bins"
+    ],
+    "crates.errorDecorator": "❌",
+    "crates.compatibleDecorator": "✅",
+    "crates.useLocalCargoIndex": false,
+}
