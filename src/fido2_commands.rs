@@ -5,6 +5,8 @@ use crate::{
     fido2_internal_error::FIDO2InternalError,
 };
 
+// use concat_in_place;
+
 // Ping
 #[derive(Debug)]
 pub(crate) struct FIDO2PacketCommandPingRequest<'a> {
@@ -196,5 +198,46 @@ impl FIDO2PacketCommandLockResponse {
     }
     pub fn pack(self) -> [u8; 0] {
         [0u8; 0]
+    }
+}
+// Msg (u2f)
+
+#[derive(Debug)]
+pub(crate) struct FIDO2PacketCommandMsgRequest<'a> {
+    pub command: u8,
+    pub data: &'a [u8],
+}
+impl<'a> FIDO2PacketCommandMsgRequest<'a> {
+    pub fn unpack(packet: &[u8]) -> Result<FIDO2PacketCommandMsgRequest, FIDO2InternalError> {
+        if packet.len() < 1 {
+            return Err(FIDO2InternalError::DataLengthError);
+        }
+        let command = packet[0];
+        let data = &packet[1..];
+        Ok(FIDO2PacketCommandMsgRequest { command, data })
+    }
+}
+#[derive(Debug)]
+pub(crate) struct FIDO2PacketCommandMsgResponse<'a> {
+    // pub status_code: u8,
+    // pub data: &'a [u8],
+    buffer: [u8; FIDO2_MAX_DATA_LENGTH],
+}
+impl<'a> FIDO2PacketCommandMsgResponse<'a> {
+    pub fn new(status_code: u8, data: &[u8]) -> FIDO2PacketCommandMsgResponse {
+        let buffer = &mut[0u8; FIDO2_MAX_DATA_LENGTH];
+        // let r = FIDO2PacketCommandMsgResponse {
+        //     buffer: &[0u8; FIDO2_MAX_DATA_LENGTH],
+        // };
+        buffer[0] = status_code;
+        for (k, v) in data.iter().enumerate() {
+            buffer[k + 1] = *v;
+        }
+        FIDO2PacketCommandMsgResponse {
+            buffer: buffer.clone(),
+        }
+    }
+    pub fn pack(self) -> &'a [u8] {
+        &self.buffer
     }
 }

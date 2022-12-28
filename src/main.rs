@@ -67,6 +67,7 @@ fn add_timer() {
     }
 }
 
+#[entry]
 fn main() -> ! {
     // hardware init
     let dp = pac::Peripherals::take().unwrap();
@@ -87,12 +88,12 @@ fn main() -> ! {
     // debug serial port
     let tx = gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh);
     let rx = gpioa.pa10;
-    let serial = serial::Serial::usart1(
+    let serial = serial::Serial::new(
         dp.USART1,
         (tx, rx),
         &mut afio.mapr,
         serial::Config::default().baudrate(115200.bps()),
-        clocks,
+        &clocks,
     );
     let (mut tx, rx) = serial.split();
     // build timestamp

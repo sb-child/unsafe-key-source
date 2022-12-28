@@ -22,9 +22,9 @@ cortex-m = "*"
 # (required when not using stdlib)
 panic-halt = "*"
 micromath = "*"
-ssd1306 = "*"
+# ssd1306 = "*"
 embedded-hal = "*"
-embedded-graphics = "*"
+# embedded-graphics = "*"
 nb = "*"
 fugit = "*"
 usb-device = "*"
@@ -33,3 +33,5 @@ build-time = "*"
 byteorder = { version = "*", default-features = false }
 num_enum = { version = "*", default-features = false }
 panic-reset = "*"
+# arrav = { version = "*", default-features = false, features = [] }
+# concat-in-place = { version = "*", default-features = false }
