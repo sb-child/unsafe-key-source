@@ -1,15 +1,25 @@
-# unsafe{key} Source
+# unsafe{key}
 
-WIP: firmware for the unsafe{key}
+**IMPORTANT: (WIP: Working in progress)**
 
-## what is unsafe{key}
+The most unsafe usb security key that support FIDO2 protocol
 
-Maybe the cheapest USB 2FA key
+## [> 中文版 <](./README-zhcn.md)
 
-board: (will open source soon)
+## Board design (hardware)
 
-## this firmware
+(prepare to testing, will open source soon)
+
+## Source code (firmware)
 
 currently support:
 
-- [ ] FIDO2 (WIP)
+- [ ] FIDO2
+  - [x] USB HID
+    - [x] data send and receive
+  - [ ] packet
+    - [x] basic structs
+    - [ ] data spliting
+  - [ ] U2F(CTAP1) protocol
+  - [ ] CTAP2 protocol
+  - [ ] other...
