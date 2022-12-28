@@ -1,6 +1,6 @@
 # unsafe{key}
 
-**IMPORTANT: (WIP: Working in progress)**
+**正在进行中，目前不能用**
 
 最不安全的支持 FIDO2 协议的安全密钥
 
