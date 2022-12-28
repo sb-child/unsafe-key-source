@@ -1,9 +1,9 @@
 use num_enum::TryFromPrimitive;
 
 use crate::{
-    consts::{BUILD_VERSION, MAJOR_VERSION, MINOR_VERSION},
+    consts::{BUILD_VERSION, FIDO2_MAX_DATA_LENGTH, MAJOR_VERSION, MINOR_VERSION},
     fido2_internal_error::FIDO2InternalError,
-    utils::{channel_id_to_array, channel_id_to_u32},
+    utils::{channel_id_to_array, channel_id_to_u32, data_len_to_array, data_len_to_u16},
 };
 
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive)]
@@ -25,7 +25,7 @@ pub(crate) struct FIDO2PacketBuilder {
     pub channel_id: u32,
     pub packet_type: Option<FIDO2PacketCommand>,
     pub seq_id: u8,
-    pub data_length: u8,
+    pub data_length: u16,
     pub is_seq: bool,
     pub data: [u8; 64 - 5],
 }
@@ -40,9 +40,8 @@ impl FIDO2PacketBuilder {
         }
         let packet_type_raw = packet[4];
         let mut packet_type = FIDO2PacketCommand::CtapHIDInit;
-        let data_length_from = packet[5];
-        let data_length_to = packet[6];
-        let mut data_length: u8 = 0;
+        let data_length_raw = data_len_to_u16(&packet[5..=6]);
+        let mut data_length: u16 = 0;
         let mut is_seq = false;
         let mut data = [0u8; 64 - 5];
         // 0b0_______ seq
@@ -50,21 +49,17 @@ impl FIDO2PacketBuilder {
         if packet_type_raw & 0b10000000 == 0b10000000 {
             // command
             // bound check
-            if (data_length_from > data_length_to)
-                || (data_length_from > (64 - 7))
-                || (data_length_to > (64 - 7))
-            {
+            if data_length_raw > FIDO2_MAX_DATA_LENGTH as u16 {
                 return Err(FIDO2InternalError::DataLengthError);
             }
             // select data
-            if data_length_from != data_length_to {
-                // at least 1 byte of data
+            if data_length_raw > 1 {
                 let data_raw: &[u8] =
-                    &packet[(7 + data_length_from) as usize..(7 + data_length_to) as usize];
+                    &packet[..(7 + data_length_raw) as usize];
                 for (k, v) in data_raw.iter().enumerate() {
                     data[k] = *v;
                 }
-                data_length = data_raw.len() as u8;
+                data_length = data_length_raw;
             }
             // convert
             let result = FIDO2PacketCommand::try_from(packet_type_raw & 0b01111111);
@@ -112,10 +107,10 @@ impl FIDO2PacketBuilder {
             }
             return Ok(packet);
         }
-        // BCNTH
-        packet[5] = 0;
-        // BCNTL
-        packet[6] = self.data_length;
+        // BCNTH, BCNTL
+        let packet_len_arr = data_len_to_array(self.data_length);
+        packet[5] = packet_len_arr[0];
+        packet[6] = packet_len_arr[1];
         // data
         for (k, v) in self.data[..self.data_length as usize].iter().enumerate() {
             packet[k + 7] = *v;

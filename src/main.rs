@@ -40,7 +40,7 @@ mod fido2_parser;
 mod utils;
 
 use consts as ProjectConsts;
-use fido2_commands as FIDO2DataStruct;
+use fido2_commands as FIDO2Commands;
 use fido2_hid_desc as FIDO2HID;
 use fido2_internal_error as FIDO2Errors;
 use fido2_parser as FIDO2Parser;
@@ -183,34 +183,19 @@ fn main() -> ! {
             {
                 continue;
             }
+            let command_req =
+                FIDO2Commands::FIDO2PacketCommandInitRequest::unpack(&parsed.data).unwrap();
+            let command_resp = FIDO2Commands::FIDO2PacketCommandInitResponse::new(
+                command_req.random,
+                [0x00, 0xc0, 0xff, 0xee],
+            );
             let mut resp_data = [0u8; 59];
-            // 8 bytes random
-            for i in 0..8 {
-                resp_data[i] = parsed.data[i];
-            }
-            // 4 bytes channel id
-            resp_data[8] = 0xde;
-            resp_data[9] = 0xad;
-            resp_data[10] = 0xbe;
-            resp_data[11] = 0xef;
-            // CTAPHID version
-            resp_data[12] = 2;
-            // Major device version number
-            resp_data[13] = 1;
-            // Minor device version number
-            resp_data[14] = 0;
-            // Build device version number
-            resp_data[15] = 1;
-            // Capabilities flags
-            // CAPABILITY_WINK 0x01 set 1 enable
-            // CAPABILITY_CBOR 0x04 set 1 enable
-            // CAPABILITY_NMSG 0x08 set 1 disable
-            resp_data[16] = 0x01 + 0x04;
+            let data_len = command_resp.apply(&mut resp_data).unwrap();
             let pack = FIDO2Parser::FIDO2PacketBuilder {
                 channel_id: 0xffffffff,
                 is_seq: false,
                 seq_id: 0xff,
-                data_length: 17,
+                data_length: data_len,
                 data: resp_data,
                 packet_type: Some(FIDO2Parser::FIDO2PacketCommand::CtapHIDInit),
             };

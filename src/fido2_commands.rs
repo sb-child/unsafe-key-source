@@ -138,7 +138,7 @@ impl FIDO2PacketCommandInitResponse {
                 | FIDO2Capabilities::CapabilityNmsg as u8),
         }
     }
-    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+    pub fn apply(self, arr: &mut [u8]) -> Option<u16> {
         let required_size = 17;
         if arr.len() < required_size {
             return None;
@@ -164,7 +164,7 @@ impl FIDO2PacketCommandInitResponse {
         // CAPABILITY_CBOR 0x04 set 1 enable
         // CAPABILITY_NMSG 0x08 set 1 disable
         arr[16] = self.capabilities_flag;
-        return Some(required_size);
+        return Some(required_size as u16);
     }
 }
 
@@ -183,7 +183,7 @@ impl FIDO2PacketCommandWinkResponse {
     pub fn new() -> FIDO2PacketCommandWinkResponse {
         FIDO2PacketCommandWinkResponse {}
     }
-    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+    pub fn apply(self, arr: &mut [u8]) -> Option<u16> {
         return Some(0);
     }
 }
@@ -210,7 +210,7 @@ impl FIDO2PacketCommandLockResponse {
     pub fn new() -> FIDO2PacketCommandLockResponse {
         FIDO2PacketCommandLockResponse {}
     }
-    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+    pub fn apply(self, arr: &mut [u8]) -> Option<u16> {
         return Some(0);
     }
 }
@@ -241,7 +241,7 @@ impl<'a> FIDO2PacketCommandMsgResponse<'a> {
     pub fn new(status_code: u8, data: &'a [u8]) -> FIDO2PacketCommandMsgResponse {
         FIDO2PacketCommandMsgResponse { status_code, data }
     }
-    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+    pub fn apply(self, arr: &mut [u8]) -> Option<u16> {
         let required_size = self.data.len() + 1;
         if arr.len() < required_size {
             return None;
@@ -250,7 +250,7 @@ impl<'a> FIDO2PacketCommandMsgResponse<'a> {
         for (k, v) in self.data.iter().enumerate() {
             arr[k + 1] = *v;
         }
-        return Some(required_size);
+        return Some(required_size as u16);
     }
 }
 
@@ -280,7 +280,7 @@ impl<'a> FIDO2PacketCommandCborResponse<'a> {
     pub fn new(status_code: u8, data: &'a [u8]) -> FIDO2PacketCommandCborResponse {
         FIDO2PacketCommandCborResponse { status_code, data }
     }
-    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+    pub fn apply(self, arr: &mut [u8]) -> Option<u16> {
         let required_size = self.data.len() + 1;
         if arr.len() < required_size {
             return None;
@@ -289,6 +289,6 @@ impl<'a> FIDO2PacketCommandCborResponse<'a> {
         for (k, v) in self.data.iter().enumerate() {
             arr[k + 1] = *v;
         }
-        return Some(required_size);
+        return Some(required_size as u16);
     }
 }
