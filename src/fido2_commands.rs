@@ -5,9 +5,8 @@ use crate::{
     fido2_internal_error::FIDO2InternalError,
 };
 
-// use concat_in_place;
-
 // Ping
+
 #[derive(Debug)]
 pub(crate) struct FIDO2PacketCommandPingRequest<'a> {
     pub data: &'a [u8],
@@ -29,7 +28,9 @@ impl<'a> FIDO2PacketCommandPingResponse<'a> {
         self.data
     }
 }
+
 // Cancel
+
 #[derive(Debug)]
 pub(crate) struct FIDO2PacketCommandCancelRequest {}
 impl FIDO2PacketCommandCancelRequest {
@@ -37,7 +38,9 @@ impl FIDO2PacketCommandCancelRequest {
         Ok(FIDO2PacketCommandCancelRequest {})
     }
 }
+
 // Error
+
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub(crate) enum FIDO2ErrorCode {
@@ -65,7 +68,9 @@ impl FIDO2PacketCommandErrorResponse {
         packet
     }
 }
+
 // KeepAlive
+
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive)]
 #[repr(u8)]
 pub(crate) enum FIDO2KeepAliveCode {
@@ -86,7 +91,9 @@ impl FIDO2PacketCommandKeepAliveResponse {
         packet
     }
 }
+
 // Init
+
 #[derive(Debug)]
 pub(crate) struct FIDO2PacketCommandInitRequest {
     pub random: [u8; 8],
@@ -131,33 +138,38 @@ impl FIDO2PacketCommandInitResponse {
                 | FIDO2Capabilities::CapabilityNmsg as u8),
         }
     }
-    pub fn pack(self) -> [u8; 17] {
-        let mut packet = [0u8; 17];
+    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+        let required_size = 17;
+        if arr.len() < required_size {
+            return None;
+        }
         // 8 bytes random
         for (k, v) in self.random.iter().enumerate() {
-            packet[k] = *v;
+            arr[k] = *v;
         }
         // 4 bytes channel id
         for (k, v) in self.channel_id.iter().enumerate() {
-            packet[k + 8] = *v;
+            arr[k + 8] = *v;
         }
         // CTAPHID version
-        packet[12] = self.protocol_version;
+        arr[12] = self.protocol_version;
         // Major device version number
-        packet[13] = self.major_version;
+        arr[13] = self.major_version;
         // Minor device version number
-        packet[14] = self.minor_version;
+        arr[14] = self.minor_version;
         // Build device version number
-        packet[15] = self.build_version;
+        arr[15] = self.build_version;
         // Capabilities flags
         // CAPABILITY_WINK 0x01 set 1 enable
         // CAPABILITY_CBOR 0x04 set 1 enable
         // CAPABILITY_NMSG 0x08 set 1 disable
-        packet[16] = self.capabilities_flag;
-        packet
+        arr[16] = self.capabilities_flag;
+        return Some(required_size);
     }
 }
+
 // Wink
+
 #[derive(Debug)]
 pub(crate) struct FIDO2PacketCommandWinkRequest {}
 impl FIDO2PacketCommandWinkRequest {
@@ -171,11 +183,13 @@ impl FIDO2PacketCommandWinkResponse {
     pub fn new() -> FIDO2PacketCommandWinkResponse {
         FIDO2PacketCommandWinkResponse {}
     }
-    pub fn pack(self) -> [u8; 0] {
-        [0u8; 0]
+    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+        return Some(0);
     }
 }
+
 // Lock
+
 #[derive(Debug)]
 pub(crate) struct FIDO2PacketCommandLockRequest {
     lock_time: u8,
@@ -196,10 +210,11 @@ impl FIDO2PacketCommandLockResponse {
     pub fn new() -> FIDO2PacketCommandLockResponse {
         FIDO2PacketCommandLockResponse {}
     }
-    pub fn pack(self) -> [u8; 0] {
-        [0u8; 0]
+    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+        return Some(0);
     }
 }
+
 // Msg (u2f)
 
 #[derive(Debug)]
@@ -219,25 +234,61 @@ impl<'a> FIDO2PacketCommandMsgRequest<'a> {
 }
 #[derive(Debug)]
 pub(crate) struct FIDO2PacketCommandMsgResponse<'a> {
-    // pub status_code: u8,
-    // pub data: &'a [u8],
-    buffer: [u8; FIDO2_MAX_DATA_LENGTH],
+    pub status_code: u8,
+    pub data: &'a [u8],
 }
 impl<'a> FIDO2PacketCommandMsgResponse<'a> {
-    pub fn new(status_code: u8, data: &[u8]) -> FIDO2PacketCommandMsgResponse {
-        let buffer = &mut[0u8; FIDO2_MAX_DATA_LENGTH];
-        // let r = FIDO2PacketCommandMsgResponse {
-        //     buffer: &[0u8; FIDO2_MAX_DATA_LENGTH],
-        // };
-        buffer[0] = status_code;
-        for (k, v) in data.iter().enumerate() {
-            buffer[k + 1] = *v;
-        }
-        FIDO2PacketCommandMsgResponse {
-            buffer: buffer.clone(),
-        }
+    pub fn new(status_code: u8, data: &'a [u8]) -> FIDO2PacketCommandMsgResponse {
+        FIDO2PacketCommandMsgResponse { status_code, data }
     }
-    pub fn pack(self) -> &'a [u8] {
-        &self.buffer
+    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+        let required_size = self.data.len() + 1;
+        if arr.len() < required_size {
+            return None;
+        }
+        arr[0] = self.status_code;
+        for (k, v) in self.data.iter().enumerate() {
+            arr[k + 1] = *v;
+        }
+        return Some(required_size);
+    }
+}
+
+// Cbor
+
+#[derive(Debug)]
+pub(crate) struct FIDO2PacketCommandCborRequest<'a> {
+    pub command: u8,
+    pub data: &'a [u8],
+}
+impl<'a> FIDO2PacketCommandCborRequest<'a> {
+    pub fn unpack(packet: &[u8]) -> Result<FIDO2PacketCommandCborRequest, FIDO2InternalError> {
+        if packet.len() < 1 {
+            return Err(FIDO2InternalError::DataLengthError);
+        }
+        let command = packet[0];
+        let data = &packet[1..];
+        Ok(FIDO2PacketCommandCborRequest { command, data })
+    }
+}
+#[derive(Debug)]
+pub(crate) struct FIDO2PacketCommandCborResponse<'a> {
+    pub status_code: u8,
+    pub data: &'a [u8],
+}
+impl<'a> FIDO2PacketCommandCborResponse<'a> {
+    pub fn new(status_code: u8, data: &'a [u8]) -> FIDO2PacketCommandCborResponse {
+        FIDO2PacketCommandCborResponse { status_code, data }
+    }
+    pub fn apply(self, arr: &mut [u8]) -> Option<usize> {
+        let required_size = self.data.len() + 1;
+        if arr.len() < required_size {
+            return None;
+        }
+        arr[0] = self.status_code;
+        for (k, v) in self.data.iter().enumerate() {
+            arr[k + 1] = *v;
+        }
+        return Some(required_size);
     }
 }
