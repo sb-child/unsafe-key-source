@@ -33,14 +33,14 @@ use usb_device::{self, prelude::*};
 use usbd_hid::{self, descriptor::generator_prelude::*};
 
 mod consts;
-mod fido2_data_struct;
+mod fido2_commands;
 mod fido2_hid_desc;
 mod fido2_internal_error;
 mod fido2_parser;
 mod utils;
 
 use consts as ProjectConsts;
-use fido2_data_struct as FIDO2DataStruct;
+use fido2_commands as FIDO2DataStruct;
 use fido2_hid_desc as FIDO2HID;
 use fido2_internal_error as FIDO2Errors;
 use fido2_parser as FIDO2Parser;
