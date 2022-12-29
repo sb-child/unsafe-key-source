@@ -46,6 +46,7 @@ use usb_device::{self, prelude::*};
 use usbd_hid::{self, descriptor::generator_prelude::*};
 
 mod consts;
+mod fido2_chunk;
 mod fido2_commands;
 mod fido2_hid_desc;
 mod fido2_internal_error;
@@ -53,6 +54,7 @@ mod fido2_parser;
 mod utils;
 
 use consts as ProjectConsts;
+use fido2_chunk as FIDO2Chunk;
 use fido2_commands as FIDO2Commands;
 use fido2_hid_desc as FIDO2HID;
 use fido2_internal_error as FIDO2Errors;
@@ -167,6 +169,9 @@ fn main() -> ! {
         .product("unsafe{key} Board v1.0")
         .serial_number(_usb_serial_number)
         .build();
+    // global buffer
+    let mut global_request_buffer = [0u8; ProjectConsts::FIDO2_MAX_DATA_LENGTH];
+    let mut global_response_buffer = [0u8; ProjectConsts::FIDO2_MAX_DATA_LENGTH];
     // event processing
     let _fido2_loop = |buff: [u8; 64]| -> &[u8] {
         let parser = FIDO2Parser::FIDO2PacketBuilder::new_from_raw_packet(buff);

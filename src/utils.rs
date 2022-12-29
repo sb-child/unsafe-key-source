@@ -44,3 +44,18 @@ pub(crate) fn data_len_to_array(c: u16) -> [u8; 2] {
     let r2 = [r[1], r[0]];
     r2
 }
+
+pub(crate) fn set_bit_u128(a: &mut u128, index: u8) {
+    let mask = 1 << index;
+    *a |= mask;
+}
+
+pub(crate) fn clear_bit_u128(a: &mut u128, index: u8) {
+    let mask = 1 << index;
+    *a &= !mask;
+}
+
+pub(crate) fn read_bit_u128(a: &u128, index: u8) -> bool {
+    let mask = 1 << index;
+    *a & mask == mask
+}
