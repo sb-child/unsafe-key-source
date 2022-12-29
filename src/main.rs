@@ -51,6 +51,7 @@ mod fido2_commands;
 mod fido2_hid_desc;
 mod fido2_internal_error;
 mod fido2_parser;
+mod global_buffer;
 mod utils;
 
 use consts as ProjectConsts;
@@ -59,6 +60,7 @@ use fido2_commands as FIDO2Commands;
 use fido2_hid_desc as FIDO2HID;
 use fido2_internal_error as FIDO2Errors;
 use fido2_parser as FIDO2Parser;
+use global_buffer as GlobalBuffer;
 
 use FIDO2Commands::FIDO2PacketCommandResponse;
 
@@ -196,32 +198,37 @@ fn main() -> ! {
         )
     }
     // flags
-    let _fido2_request_done = |length: u16| {
+    let mut _fido2_request_done = |length: u16| {
         global_request_buffer_data_len = length;
         global_request_buffer_done = true;
     };
-    let _fido2_response_done = |length: u16| {
+    let mut _fido2_response_done = |length: u16| {
         global_response_buffer_data_len = length;
         global_response_buffer_done = true;
     };
-    let _fido2_request_clear = || {
+    let mut _fido2_request_clear = || {
         global_request_buffer_data_len = 0;
         global_request_buffer_done = false;
         global_request_buffer.fill(0u8);
     };
-    let _fido2_response_clear = || {
+    let mut _fido2_response_clear = || {
         global_response_buffer_data_len = 0;
         global_response_buffer_done = false;
         global_request_buffer.fill(0u8);
     };
-    let _fido2_request_pending = || -> bool { !global_request_buffer_done };
-    let _fido2_response_pending = || -> bool { !global_response_buffer_done };
+    let mut _fido2_request_pending = || -> bool { !global_request_buffer_done };
+    let mut _fido2_response_pending = || -> bool { !global_response_buffer_done };
     // event processing
     let _fido2_req = |buff: [u8; 64]| {
         let parser = FIDO2Parser::FIDO2PacketBuilder::new_from_raw_packet(buff);
         match parser {
             Ok(_) => {}
-            Err(FIDO2Errors::FIDO2InternalError::CommandNotFoundError) => {}
+            Err(FIDO2Errors::FIDO2InternalError::CommandNotFoundError) => {
+                let length = _fido2_err_command_not_found()
+                    .apply(&mut global_response_buffer)
+                    .unwrap();
+                _fido2_response_done(length);
+            }
             Err(FIDO2Errors::FIDO2InternalError::DataLengthError) => {}
             Err(FIDO2Errors::FIDO2InternalError::ReversedChannelError) => {}
         };
