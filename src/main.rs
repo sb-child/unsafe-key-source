@@ -60,6 +60,8 @@ use fido2_hid_desc as FIDO2HID;
 use fido2_internal_error as FIDO2Errors;
 use fido2_parser as FIDO2Parser;
 
+use FIDO2Commands::FIDO2PacketCommandResponse;
+
 static mut GLOBAL_TIMER: u128 = 0;
 // static G_TIM: Mutex<RefCell<Option<stm32f1xx_hal::timer::CounterUs<TIM1>>>> =
 //     Mutex::new(RefCell::new(None));
@@ -172,8 +174,50 @@ fn main() -> ! {
     // global buffer
     let mut global_request_buffer = [0u8; ProjectConsts::FIDO2_MAX_DATA_LENGTH];
     let mut global_response_buffer = [0u8; ProjectConsts::FIDO2_MAX_DATA_LENGTH];
+    // perpare flags
+    let mut global_request_buffer_data_len = 0u16;
+    let mut global_response_buffer_data_len = 0u16;
+    let mut global_request_buffer_done = false;
+    let mut global_response_buffer_done = false;
+    // error generator
+    fn _fido2_err_command_not_found() -> impl FIDO2Commands::FIDO2PacketCommandResponse {
+        FIDO2Commands::FIDO2PacketCommandErrorResponse::new(
+            FIDO2Commands::FIDO2ErrorCode::ErrInvalidCmd,
+        )
+    }
+    fn _fido2_err_data_length() -> impl FIDO2Commands::FIDO2PacketCommandResponse {
+        FIDO2Commands::FIDO2PacketCommandErrorResponse::new(
+            FIDO2Commands::FIDO2ErrorCode::ErrInvalidLen,
+        )
+    }
+    fn _fido2_err_reversed_channel() -> impl FIDO2Commands::FIDO2PacketCommandResponse {
+        FIDO2Commands::FIDO2PacketCommandErrorResponse::new(
+            FIDO2Commands::FIDO2ErrorCode::ErrInvalidChannel,
+        )
+    }
+    // flags
+    let _fido2_request_done = |length: u16| {
+        global_request_buffer_data_len = length;
+        global_request_buffer_done = true;
+    };
+    let _fido2_response_done = |length: u16| {
+        global_response_buffer_data_len = length;
+        global_response_buffer_done = true;
+    };
+    let _fido2_request_clear = || {
+        global_request_buffer_data_len = 0;
+        global_request_buffer_done = false;
+        global_request_buffer.fill(0u8);
+    };
+    let _fido2_response_clear = || {
+        global_response_buffer_data_len = 0;
+        global_response_buffer_done = false;
+        global_request_buffer.fill(0u8);
+    };
+    let _fido2_request_pending = || -> bool { !global_request_buffer_done };
+    let _fido2_response_pending = || -> bool { !global_response_buffer_done };
     // event processing
-    let _fido2_loop = |buff: [u8; 64]| -> &[u8] {
+    let _fido2_req = |buff: [u8; 64]| {
         let parser = FIDO2Parser::FIDO2PacketBuilder::new_from_raw_packet(buff);
         match parser {
             Ok(_) => {}
@@ -181,7 +225,7 @@ fn main() -> ! {
             Err(FIDO2Errors::FIDO2InternalError::DataLengthError) => {}
             Err(FIDO2Errors::FIDO2InternalError::ReversedChannelError) => {}
         };
-        &[0u8; 0]
+        let req = parser.unwrap();
     };
     // === loop ===
     loop {
