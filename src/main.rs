@@ -224,10 +224,10 @@ fn main() -> ! {
         match parser {
             Ok(_) => {}
             Err(FIDO2Errors::FIDO2InternalError::CommandNotFoundError) => {
-                let length = _fido2_err_command_not_found()
-                    .apply(&mut global_response_buffer)
-                    .unwrap();
-                _fido2_response_done(length);
+                // let length = _fido2_err_command_not_found()
+                //     .apply(&mut global_response_buffer)
+                //     .unwrap();
+                // _fido2_response_done(length);
             }
             Err(FIDO2Errors::FIDO2InternalError::DataLengthError) => {}
             Err(FIDO2Errors::FIDO2InternalError::ReversedChannelError) => {}
