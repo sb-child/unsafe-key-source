@@ -20,4 +20,28 @@ impl GlobalBuffer {
             response_buffer_done: false,
         }
     }
+    pub fn set_request_done(&mut self, length: u16) {
+        self.request_buffer_data_len = length;
+        self.request_buffer_done = true;
+    }
+    pub fn set_response_done(&mut self, length: u16) {
+        self.response_buffer_data_len = length;
+        self.response_buffer_done = true;
+    }
+    pub fn get_request_pending(&self) -> bool {
+        !self.request_buffer_done
+    }
+    pub fn get_response_pending(&self) -> bool {
+        !self.response_buffer_done
+    }
+    pub fn clear_request(&mut self) {
+        self.request_buffer_data_len = 0;
+        self.request_buffer_done = false;
+        self.request_buffer.fill(0u8);
+    }
+    pub fn clear_response(&mut self) {
+        self.response_buffer_data_len = 0;
+        self.response_buffer_done = false;
+        self.response_buffer.fill(0u8);
+    }
 }
