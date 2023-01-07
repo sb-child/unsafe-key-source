@@ -1,4 +1,5 @@
 use crate::consts::FIDO2_MAX_DATA_LENGTH;
+use crate::FIDO2Commands::FIDO2PacketCommandResponse;
 
 #[derive(Debug)]
 pub(crate) struct GlobalBuffer {
@@ -19,6 +20,10 @@ impl GlobalBuffer {
             request_buffer_done: false,
             response_buffer_done: false,
         }
+    }
+    pub fn apply_response_from(&mut self, resp: impl FIDO2PacketCommandResponse){
+        let length = resp.apply(&mut self.response_buffer).unwrap();
+        self.set_response_done(length);
     }
     pub fn set_request_done(&mut self, length: u16) {
         self.request_buffer_data_len = length;

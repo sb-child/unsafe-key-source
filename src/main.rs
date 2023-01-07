@@ -174,13 +174,7 @@ fn main() -> ! {
         .serial_number(_usb_serial_number)
         .build();
     // global buffer
-    let mut global_request_buffer = [0u8; ProjectConsts::FIDO2_MAX_DATA_LENGTH];
-    let mut global_response_buffer = [0u8; ProjectConsts::FIDO2_MAX_DATA_LENGTH];
-    // perpare flags
-    let mut global_request_buffer_data_len = 0u16;
-    let mut global_response_buffer_data_len = 0u16;
-    let mut global_request_buffer_done = false;
-    let mut global_response_buffer_done = false;
+    let mut global_buffer = GlobalBuffer::GlobalBuffer::new();
     // error generator
     fn _fido2_err_command_not_found() -> impl FIDO2Commands::FIDO2PacketCommandResponse {
         FIDO2Commands::FIDO2PacketCommandErrorResponse::new(
@@ -197,40 +191,20 @@ fn main() -> ! {
             FIDO2Commands::FIDO2ErrorCode::ErrInvalidChannel,
         )
     }
-    // flags
-    let mut _fido2_request_done = |length: u16| {
-        global_request_buffer_data_len = length;
-        global_request_buffer_done = true;
-    };
-    let mut _fido2_response_done = |length: u16| {
-        global_response_buffer_data_len = length;
-        global_response_buffer_done = true;
-    };
-    let mut _fido2_request_clear = || {
-        global_request_buffer_data_len = 0;
-        global_request_buffer_done = false;
-        global_request_buffer.fill(0u8);
-    };
-    let mut _fido2_response_clear = || {
-        global_response_buffer_data_len = 0;
-        global_response_buffer_done = false;
-        global_request_buffer.fill(0u8);
-    };
-    let mut _fido2_request_pending = || -> bool { !global_request_buffer_done };
-    let mut _fido2_response_pending = || -> bool { !global_response_buffer_done };
     // event processing
     let _fido2_req = |buff: [u8; 64]| {
         let parser = FIDO2Parser::FIDO2PacketBuilder::new_from_raw_packet(buff);
         match parser {
             Ok(_) => {}
             Err(FIDO2Errors::FIDO2InternalError::CommandNotFoundError) => {
-                // let length = _fido2_err_command_not_found()
-                //     .apply(&mut global_response_buffer)
-                //     .unwrap();
-                // _fido2_response_done(length);
+                global_buffer.apply_response_from(_fido2_err_command_not_found());
             }
-            Err(FIDO2Errors::FIDO2InternalError::DataLengthError) => {}
-            Err(FIDO2Errors::FIDO2InternalError::ReversedChannelError) => {}
+            Err(FIDO2Errors::FIDO2InternalError::DataLengthError) => {
+                global_buffer.apply_response_from(_fido2_err_data_length());
+            }
+            Err(FIDO2Errors::FIDO2InternalError::ReversedChannelError) => {
+                global_buffer.apply_response_from(_fido2_err_reversed_channel());
+            }
         };
         let req = parser.unwrap();
     };
