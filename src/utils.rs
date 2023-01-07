@@ -59,3 +59,18 @@ pub(crate) fn read_bit_u128(a: &u128, index: u8) -> bool {
     let mask = 1 << index;
     *a & mask == mask
 }
+
+pub(crate) fn insert_number_string(arr: &mut [u8], val: u8, last: usize) {
+    let mut num = val;
+    let first = if val >= 100 {
+        last - 2
+    } else if val >= 10 {
+        last - 1
+    } else {
+        last
+    };
+    for i in first..=last {
+        arr[i] = 48 + (num % 10);
+        num /= 10;
+    }
+}

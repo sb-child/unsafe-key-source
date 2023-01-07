@@ -27,6 +27,7 @@ use byteorder;
 use core::cell::RefCell;
 use core::fmt::Write;
 use core::ops::DerefMut;
+use core::str::from_utf8;
 use cortex_m::interrupt::Mutex;
 use cortex_m_rt::entry;
 use embedded_hal::digital::v2::{InputPin, IoPin, OutputPin};
@@ -61,6 +62,7 @@ use fido2_hid_desc as FIDO2HID;
 use fido2_internal_error as FIDO2Errors;
 use fido2_parser as FIDO2Parser;
 use global_buffer as GlobalBuffer;
+use utils as Utils;
 
 use FIDO2Commands::FIDO2PacketCommandResponse;
 
@@ -116,10 +118,13 @@ fn main() -> ! {
     );
     let (mut tx, rx) = serial.split();
     // build timestamp
-    let _usb_serial_number = concat!(
-        "Firmware v1 ",
-        build_time::build_time_local!("%Y%m%d-%H%M%S%z")
+    let mut _usb_serial_number = concat!(
+        "Firmware v000 ",                                 // 14
+        build_time::build_time_local!("%Y%m%d-%H%M%S%z")  // 20
     );
+    let mut _usb_serial_number = _usb_serial_number.as_bytes().clone();
+    Utils::insert_number_string(&mut _usb_serial_number, ProjectConsts::BUILD_VERSION, 12);
+    let _usb_serial_number = from_utf8(&_usb_serial_number).unwrap();
     // === function ===
     // channel ID
     // 0x00000000 is reversed, 0xffffffff is reserved for broadcast
