@@ -16,6 +16,6 @@ cargo build --release
 mv ./target/thumbv7m-none-eabi/release/unsafe-key ./exec
 arm-none-eabi-objcopy ./exec -O binary ./exec.bin
 du -h ./exec.bin
-stm32flash -w ./exec.bin -v -g 0x00 /dev/ttyUSB0 || exit 1
+stm32flash -w ./exec.bin -v -g 0x00 /dev/ttyUSB0 || true
 rm ./exec.bin
 rm ./exec
