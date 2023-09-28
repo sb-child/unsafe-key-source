@@ -20,6 +20,10 @@
 #![no_std]
 #![allow(unused_imports)]
 
+extern crate alloc;
+
+use alloc::string::String;
+use embedded_alloc::Heap;
 use num_enum::TryFromPrimitive;
 // use panic_halt as _;
 use build_time;
@@ -67,6 +71,10 @@ use utils as Utils;
 use FIDO2Commands::FIDO2PacketCommandResponse;
 
 static mut GLOBAL_TIMER: u128 = 0;
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
+
 // static G_TIM: Mutex<RefCell<Option<stm32f1xx_hal::timer::CounterUs<TIM1>>>> =
 //     Mutex::new(RefCell::new(None));
 
@@ -90,6 +98,13 @@ fn add_timer() {
 
 #[entry]
 fn main() -> ! {
+    {
+        // alloc init
+        use core::mem::MaybeUninit;
+        const HEAP_SIZE: usize = 1024;
+        static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+        unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
+    }
     // hardware init
     let dp = pac::Peripherals::take().unwrap();
     let cp = cortex_m::Peripherals::take().unwrap();
@@ -118,11 +133,9 @@ fn main() -> ! {
     );
     let (mut tx, rx) = serial.split();
     // build timestamp
-    let mut _usb_serial_number = concat!(
-        "Firmware v000 ",                                 // 14
-        build_time::build_time_local!("%Y%m%d-%H%M%S%z")  // 20
-    );
-    let mut _usb_serial_number = _usb_serial_number.as_bytes().clone();
+    let mut _usb_serial_number = String::from("Firmware v000 ");
+    _usb_serial_number.push_str(build_time::build_time_local!("%Y%m%d-%H%M%S%z"));
+    let mut _usb_serial_number = _usb_serial_number.into_bytes();
     Utils::insert_number_string(&mut _usb_serial_number, ProjectConsts::BUILD_VERSION, 12);
     let _usb_serial_number = from_utf8(&_usb_serial_number).unwrap();
     // === function ===

@@ -17,7 +17,7 @@ stm32f1xx-hal = { version = "*", features = ["stm32f103", "rt", "medium"] }
 # provides startup code for the ARM CPU
 cortex-m-rt = { version = "*", features = ["device"] }
 # provides access to low level ARM CPU registers (used for delay)
-cortex-m = "*"
+cortex-m =  { version = "*", features = ["critical-section-single-core"]}
 # provies a panic-handler (halting cpu)
 # (required when not using stdlib)
 panic-halt = "*"
@@ -33,5 +33,6 @@ build-time = "*"
 byteorder = { version = "*", default-features = false }
 num_enum = { version = "*", default-features = false }
 panic-reset = "*"
+embedded-alloc = "*"
 # arrav = { version = "*", default-features = false, features = [] }
 # concat-in-place = { version = "*", default-features = false }
