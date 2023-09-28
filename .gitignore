@@ -1,3 +1,5 @@
 /target
 /img/*.bin
 /__*
+/exec
+/exec.bin
